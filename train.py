@@ -43,14 +43,17 @@ def train(lr, device, chkpointperiod):
                 logging.info(f'Checkpoint {epoch + 1} saved!')
 
                 with torch.no_grad():
-                    num_splits = 10
+                    num_splits = 400 #this is the number to split the data for evaluation so my GPU doesn't freak out about memory
                     split_size = video.coords.shape[0]//num_splits
                     error = 0
                     for i in range(num_splits): #PSNR calculated across full video
                         coords_split = video.coords[i*split_size:(i+1)*split_size]
+                        video_split = video.vid[i*split_size:(i+1)*split_size]
                         coords_split = coords_split.to(device)
+                        video_split = video_split.to(device)
                         model_out = model(coords_split)
-                        error += mse(model_out, coords_split)
+                        error += mse(model_out, video_split)
+                        print("Eval iter: ", i)
                     error = error/num_splits
                     psnr = 10*torch.log10(2/error)
                     wandb.log({"PSNR": psnr},) #for sirens this PS

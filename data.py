@@ -35,5 +35,5 @@ class Video(Dataset):
     def __getitem__(self, idx):
         rand_indices = torch.randint(0, self.vid.shape[0], (self.num_items,)) 
         vid_values = self.vid[rand_indices]
-        coord_values = self.vid[rand_indices]
+        coord_values = self.coords[rand_indices]
         return coord_values, vid_values

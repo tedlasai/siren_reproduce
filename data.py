@@ -10,7 +10,7 @@ class Video(Dataset):
         self.num_items = num_items #num_items iis 160000 as specified in paper
         if video_num == 1:
 
-            self.vid = torch.tensor(skvideo.io.vread("cat.mp4").astype(np.single) / 255.0)
+            self.vid = torch.tensor(skvideo.io.vread("cat_video.mp4").astype(np.single) / 255.0)
         else:
             self.vid = "Define this later"
         

@@ -4,7 +4,7 @@ class SirenLayer(nn.Module):
 
     def __init__(self, in_size, out_size, first_layer=False, bias=True):
         super(SirenLayer, self).__init__()
-        rand_weights = (torch.rand(in_size)-0.5)*2 #get random numbers between -1 and 1
+        rand_weights = (torch.rand(out_size, in_size)-0.5)*2 #get random numbers between -1 and 1 (uniform distribution)
         self.linear_layer = nn.Linear(in_size, out_size, bias)
         self.w_0 = 1
         if first_layer:

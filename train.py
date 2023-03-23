@@ -19,6 +19,7 @@ def train(video_num, lr, device, chkpointperiod):
     video = Video(video_num=video_num)
     optimizer = optim.Adam(model.parameters(), lr=lr)
     dataloader = DataLoader(video, batch_size=1, pin_memory=True, num_workers=0)
+    print(model)
     for epoch in range(epochs):
         for coord_values, vid_values in dataloader:
             dir_checkpoint = f'./checkpoints_video/'
@@ -32,7 +33,7 @@ def train(video_num, lr, device, chkpointperiod):
             optimizer.step()
             print(f"Loss:{loss} ")
 
-            psnr = 10*torch.log10(2/loss)
+            psnr = 10*torch.log10(4/loss)
             wandb.log({"Mse": loss, "PSNR_batch": psnr},) #psnr for small batch
 
 
@@ -58,7 +59,7 @@ def train(video_num, lr, device, chkpointperiod):
                         
                         mse_errors = mse(model_out,video_split)
                         eps=1e-10
-                        psnr_values[i] = 10*torch.log10(2/(mse_errors+eps))
+                        psnr_values[i] = 10*torch.log10(4/(mse_errors+eps))
                         print("ITER: ", i)
 
                     expectation_psnr = torch.mean(psnr_values)

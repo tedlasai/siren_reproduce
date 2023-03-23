@@ -22,7 +22,7 @@ class SirenLayer(nn.Module):
             return torch.sin(self.w_0*linear_out)
     
 class mySiren(nn.Module):
-    def __init__(self, in_size=2, out_size=3, hidden_layers=5, hidden_size=256): #these are the valus they used in the paper for most experiments
+    def __init__(self, in_size=2, out_size=3, hidden_layers=3, hidden_size=256): #these are the valus they used in the paper for most experiments
         super(mySiren, self).__init__()
         layers=[]
         layers.append(SirenLayer(in_size, hidden_size, True)) #first layer

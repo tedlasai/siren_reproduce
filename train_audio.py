@@ -30,7 +30,7 @@ def train(audio_num, lr, device, chkpointperiod):
             optimizer.step()
             print(f"Loss:{loss} ")
 
-            psnr = 10*torch.log10(2/loss)
+            psnr = 10*torch.log10(1/loss)
             
             wandb.log({"Mse": loss, "PSNR": psnr},) 
 

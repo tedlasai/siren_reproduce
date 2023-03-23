@@ -4,7 +4,7 @@ import skvideo.io
 from skvideo import datasets
 import numpy as np
 from scipy.io import wavfile
-
+from PIL import Image
 
 
 class Video(Dataset):
@@ -27,7 +27,7 @@ class Video(Dataset):
 
         coords = torch.stack(torch.meshgrid((coords_dim0, coords_dim1, coords_dim2)), axis=-1)
 
-
+        #pu.db
         self.coords = coords.view(-1,3)
         self.vid = self.vid.view(-1,3)
 
@@ -40,7 +40,6 @@ class Video(Dataset):
         rand_indices = torch.randint(0, self.vid.shape[0], (self.num_items,)) 
         vid_values = self.vid[rand_indices]
         coord_values = self.coords[rand_indices]
-        #pu.db
         return coord_values, vid_values
 
 
@@ -53,19 +52,39 @@ class Audio(Dataset):
         else:
             samplerate, self.audio = wavfile.read('./gt_counting.wav')
             self.audio = torch.unsqueeze(torch.tensor(self.audio), dim=1)
-        
-        #self.audio = (self.audio-0.5)*2 #scale video between -1 and 1
-       
 
-        #coordinates for each diemension
         self.coords = torch.linspace(-1, 1, self.audio.shape[0]).unsqueeze(dim=1)*100 # the paper did this mulitiplication by 100
 
-        #self.vid = self.vid.view(-1,3)
 
     def __len__(self):
         return 1
 
     def __getitem__(self, idx):
         audio_values = self.audio[:]
+        coord_values = self.coords[:]
+        return coord_values, audio_values
+
+class Poisson(Dataset):
+    def __init__(self):
+        img = Image.open('starfish.jpg').convert("L") #grayscale
+        self.image = torch.tensor(np.array(img))
+        coords_dim0 = torch.linspace(-1, 1, self.image.shape[0])
+        coords_dim1 = torch.linspace(-1, 1, self.image.shape[1])
+        coords = torch.stack(torch.meshgrid((coords_dim0, coords_dim1)), axis=-1)
+        self.coords = coords.view(-1,3)
+        #self.derivative_gt=
+
+        self.use_derivative = True
+
+        if self.use_derivative :
+            print("HI")
+
+
+
+
+    def __len__(self):
+        return 1
+
+    def __getitem__(self, idx):
         coord_values = self.coords[:]
         return coord_values, audio_values

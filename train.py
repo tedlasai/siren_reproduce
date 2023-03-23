@@ -9,12 +9,14 @@ import numpy as np
 import torch
 import wandb
 
-def train(lr, device, chkpointperiod):
+import pudb
+
+def train(video_num, lr, device, chkpointperiod):
     epochs=100000 #number used in paper for video training
 
-    model = mySiren(in_size=3, out_size=3, hidden_layers=5, hidden_size=1024)
+    model = mySiren(in_size=3, out_size=3, hidden_layers=3, hidden_size=1024)
     model.to(device=device)
-    video = Video(video_num=1)
+    video = Video(video_num=video_num)
     optimizer = optim.Adam(model.parameters(), lr=lr)
     dataloader = DataLoader(video, batch_size=1, pin_memory=True, num_workers=0)
     for epoch in range(epochs):
@@ -31,7 +33,7 @@ def train(lr, device, chkpointperiod):
             print(f"Loss:{loss} ")
 
             psnr = 10*torch.log10(2/loss)
-            wandb.log({"Loss": loss, "PSNR_batch": psnr},) #psnr for small batch
+            wandb.log({"Mse": loss, "PSNR_batch": psnr},) #psnr for small batch
 
 
             if (epoch + 1) % chkpointperiod == 0 or epoch==(epochs-1):#for last epoch output tthe full psnr
@@ -43,20 +45,35 @@ def train(lr, device, chkpointperiod):
                 logging.info(f'Checkpoint {epoch + 1} saved!')
 
                 with torch.no_grad():
-                    num_splits = 400 #this is the number to split the data for evaluation so my GPU doesn't freak out about memory
+                    num_splits = video.num_frames #this is the number to split the data for evaluation so my GPU doesn't freak out about memory
                     split_size = video.coords.shape[0]//num_splits
-                    error = 0
+                    psnr_values = torch.empty(num_splits)
                     for i in range(num_splits): #PSNR calculated across full video
                         coords_split = video.coords[i*split_size:(i+1)*split_size]
                         video_split = video.vid[i*split_size:(i+1)*split_size]
                         coords_split = coords_split.to(device)
+                        #print("COORDS", coords_split)
                         video_split = video_split.to(device)
                         model_out = model(coords_split)
-                        error += mse(model_out, video_split)
-                        print("Eval iter: ", i)
-                    error = error/num_splits
-                    psnr = 10*torch.log10(2/error)
-                    wandb.log({"PSNR": psnr},) #for sirens this PS
+                        
+                        mse_errors = mse(model_out,video_split)
+                        eps=1e-10
+                        psnr_values[i] = 10*torch.log10(2/(mse_errors+eps))
+                        print("ITER: ", i)
+
+                    expectation_psnr = torch.mean(psnr_values)
+                    psnr_variance = torch.var(psnr_values)
+                   
+                    #expectation_psnr = 10*torch.log10(2/expectation_mse)
+
+                    #psnr_variance = 10*torch.log10(2/mse_variance)
+
+
+
+                
+                    wandb.log({"PSNR_mean": expectation_psnr, "PSNR_variance": psnr_variance},) #for sirens this PS
+                    print("PSNR MEAN: ", expectation_psnr)
+                    print("PSNR VAR: ", psnr_variance)
 
 
 
@@ -65,6 +82,8 @@ def get_args():
     parser = argparse.ArgumentParser(description='Train video network')
     parser.add_argument('-lr', '--learning-rate', metavar='LR', type=float, nargs='?', default=0.0001,
                         help='Learning rate', dest='lr')
+    parser.add_argument('-v', '--video-num', metavar='VN', type=int, nargs='?', default=1,
+    help='Learning rate', dest='video_num')
     parser.add_argument('-c', '--checkpoint-period', dest='chkpointperiod', type=int, default=5,
                     help='Number of epochs to save a checkpoint')
     return parser.parse_args()
@@ -96,4 +115,4 @@ if __name__ == '__main__':
     notes="",
     tags=["baseline"])
 
-    train(lr=args.lr, device=device, chkpointperiod=args.chkpointperiod,)
+    train(lr=args.lr, device=device, chkpointperiod=args.chkpointperiod,video_num = args.video_num)

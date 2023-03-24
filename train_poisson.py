@@ -37,8 +37,10 @@ def train(lr, device, chkpointperiod, gradientlaplace):
          
 
             laplace_total = 0.
-            for i in range(2):
-                laplace_total += torch.autograd.grad(gradient[:,:,i], coord_values, torch.ones_like(gradient[:,:,i]), create_graph=True)[0][:,:,i:i+1]
+            laplace_total += torch.autograd.grad(gradient[:,:,0], coord_values, torch.ones_like(gradient[:,:,0]), create_graph=True)[0][:,:,0]
+            laplace_total += torch.autograd.grad(gradient[:,:,1], coord_values, torch.ones_like(gradient[:,:,1]), create_graph=True)[0][:,:,1]
+            laplace_total = laplace_total.squeeze()
+            laplace_gt  = laplace_gt.squeeze()
 
             
 
@@ -48,7 +50,7 @@ def train(lr, device, chkpointperiod, gradientlaplace):
 
                 loss = mse(gradient, gradient_gt)
             else:
-                loss = mse(laplace_total, laplace_gt)
+                loss = mse(laplace_total.squeeze(), laplace_gt.squeeze())
 
             loss.backward(retain_graph=False)
             optimizer.step()

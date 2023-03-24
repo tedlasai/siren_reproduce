@@ -66,11 +66,14 @@ class Audio(Dataset):
         return coord_values, audio_values
 
 class Poisson(Dataset):
-    def __init__(self):
+    def __init__(self, imageMult, num_items = None):
+        self.num_items = num_items
         img = Image.open('starfish.jpg').convert("L") #grayscale
         self.image = torch.tensor(np.array(img).astype(np.single))/255.0
        
         self.image = (self.image - 0.5)*2
+
+        self.image *= imageMult
         
         coords_dim0 = torch.linspace(-1, 1, self.image.shape[0])
         coords_dim1 = torch.linspace(-1, 1, self.image.shape[1])
@@ -78,12 +81,14 @@ class Poisson(Dataset):
         self.coords = coords.view(-1,2)
         x_sobel = torch.tensor(scipy.ndimage.sobel(self.image, axis=0).astype(np.single))
         y_sobel = torch.tensor(scipy.ndimage.sobel(self.image, axis=1).astype(np.single))
-        gradient = torch.stack((x_sobel, y_sobel), axis=2) * 10
+        gradient = torch.stack((x_sobel, y_sobel), axis=2)
 
-        laplace = torch.tensor(scipy.ndimage.laplace(self.image).astype(np.single))
+
+        self.laplace = torch.tensor(scipy.ndimage.laplace(self.image).astype(np.single))
 
         self.image = self.image.view(-1,1)
         self.gradient = gradient.view(-1,2)
+        self.laplace = self.laplace.view(-1,1)
 
 
 
@@ -92,7 +97,15 @@ class Poisson(Dataset):
         return 1
 
     def __getitem__(self, idx):
-        coord_values = self.coords[:]
-        gradient_values = self.gradient[:]
-        laplace_values = self.laplace[:]
-        return coord_values, gradient_values, laplace_values
+        if self.num_items != 0:
+            rand_indices = torch.randint(0, self.image.shape[0], (self.num_items,)) 
+            coord_values = self.coords[rand_indices]
+            image_values = self.image[rand_indices]
+            gradient_values = self.gradient[rand_indices]
+            laplace_values = self.laplace[rand_indices]
+        else:
+            coord_values = self.coords[:]
+            image_values = self.image[:]
+            gradient_values = self.gradient[:]
+            laplace_values = self.laplace[:]
+        return coord_values, image_values, gradient_values, laplace_values

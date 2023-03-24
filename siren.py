@@ -32,7 +32,8 @@ class mySiren(nn.Module):
         self.model = nn.Sequential(*layers)
     
     def forward(self, input):
-        return self.model(input)
+        model_output = self.model(input)
+        return model_output
 
 
 

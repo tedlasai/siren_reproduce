@@ -5,6 +5,7 @@ from skvideo import datasets
 import numpy as np
 from scipy.io import wavfile
 from PIL import Image
+import scipy
 
 
 class Video(Dataset):
@@ -67,17 +68,22 @@ class Audio(Dataset):
 class Poisson(Dataset):
     def __init__(self):
         img = Image.open('starfish.jpg').convert("L") #grayscale
-        self.image = torch.tensor(np.array(img))
+        self.image = torch.tensor(np.array(img).astype(np.single))/255.0
+       
+        self.image = (self.image - 0.5)*2
+        
         coords_dim0 = torch.linspace(-1, 1, self.image.shape[0])
         coords_dim1 = torch.linspace(-1, 1, self.image.shape[1])
         coords = torch.stack(torch.meshgrid((coords_dim0, coords_dim1)), axis=-1)
-        self.coords = coords.view(-1,3)
-        #self.derivative_gt=
+        self.coords = coords.view(-1,2)
+        x_sobel = torch.tensor(scipy.ndimage.sobel(self.image, axis=0).astype(np.single))
+        y_sobel = torch.tensor(scipy.ndimage.sobel(self.image, axis=1).astype(np.single))
+        gradient = torch.stack((x_sobel, y_sobel), axis=2) * 10
 
-        self.use_derivative = True
+        laplace = torch.tensor(scipy.ndimage.laplace(self.image).astype(np.single))
 
-        if self.use_derivative :
-            print("HI")
+        self.image = self.image.view(-1,1)
+        self.gradient = gradient.view(-1,2)
 
 
 
@@ -87,4 +93,6 @@ class Poisson(Dataset):
 
     def __getitem__(self, idx):
         coord_values = self.coords[:]
-        return coord_values, audio_values
+        gradient_values = self.gradient[:]
+        laplace_values = self.laplace[:]
+        return coord_values, gradient_values, laplace_values

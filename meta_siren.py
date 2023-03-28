@@ -27,10 +27,12 @@ class BatchLinear(nn.Linear, MetaModule):
         bias = params.get('bias', None)
         weight = params['weight']
 
-        print("BIAS SHAPE", bias.shappe)
+        print("BIAS SHAPE", bias.shape)
         print("WEIGHT SHAPE", weight.shape)
         print("INPUT SHAPE", input.shape)
 
+        weight_heere = weight.permute(*[i for i in range(len(weight.shape) - 2)], -1, -2)
+        print("WTF", weight_heere.shape)
         output = input.matmul(weight.permute(*[i for i in range(len(weight.shape) - 2)], -1, -2))
         output += bias.unsqueeze(-2)
         return output
@@ -79,7 +81,7 @@ class myMetaSiren(MetaModule):
     def forward(self, input, params=None):
 
         subdict = get_subdict(params, 'model')
-        print("PARANMS", subdict)
+        #print("PARANMS", subdict)
         return self.model(input, params=subdict)
 
 

@@ -56,6 +56,7 @@ def train(video_num, lr, device, chkpointperiod):
                         #print("COORDS", coords_split)
                         video_split = video_split.to(device)
                         model_out = model(coords_split)
+                        model_out = torch.clip(model_out, -1, 1)#clip output to make sure it stays in range
                         
                         mse_errors = mse(model_out,video_split)
                         eps=1e-10
@@ -64,18 +65,8 @@ def train(video_num, lr, device, chkpointperiod):
 
                     expectation_psnr = torch.mean(psnr_values)
                     psnr_variance = torch.var(psnr_values)
-                   
-                    #expectation_psnr = 10*torch.log10(2/expectation_mse)
-
-                    #psnr_variance = 10*torch.log10(2/mse_variance)
-
-
-
                 
-                    wandb.log({"PSNR_mean": expectation_psnr, "PSNR_variance": psnr_variance},) #for sirens this PS
-                    print("PSNR MEAN: ", expectation_psnr)
-                    print("PSNR VAR: ", psnr_variance)
-
+                    wandb.log({"PSNR_mean": expectation_psnr, "PSNR_variance": psnr_variance},) 
 
 
 

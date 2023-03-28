@@ -62,7 +62,8 @@ def train(lr, device, chkpointperiod):
                     os.mkdir(dir_checkpoint)
                     logging.info('Created checkpoint directory')
 
-                torch.save(model.state_dict(), dir_checkpoint + f'epoch{epoch + 1}.pth')
+                torch.save(encoder.state_dict(), dir_checkpoint + f'encoder_epoch{epoch + 1}.pth')
+                torch.save(encoder.state_dict(), dir_checkpoint + f'hypernet_epoch{epoch + 1}.pth')
                 logging.info(f'Checkpoint {epoch + 1} saved!')
 
                 with torch.no_grad():
@@ -86,7 +87,7 @@ def train(lr, device, chkpointperiod):
 
 
 def get_args():
-    parser = argparse.ArgumentParser(description='Train video network')
+    parser = argparse.ArgumentParser(description='Train reconstruction network')
     parser.add_argument('-lr', '--learning-rate', metavar='LR', type=float, nargs='?', default=0.00005,
                         help='Learning rate', dest='lr')
     parser.add_argument('-c', '--checkpoint-period', dest='chkpointperiod', type=int, default=5000,

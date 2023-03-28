@@ -19,6 +19,8 @@ class Video(Dataset):
         self.num_frames = self.vid.shape[0]
         
         self.vid = (self.vid-0.5)*2 #scale video between -1 and 1
+
+        self.original_shape = self.vid.shape #just keep this for later reconstruction
        
 
         #coordinates for each diemension

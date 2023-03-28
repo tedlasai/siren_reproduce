@@ -36,7 +36,7 @@ def test(video_num, device, chkpoint):
             model_out = model_out.reshape(video.original_shape[1], video.original_shape[2], video.original_shape[3])
             
             im = Image.fromarray(model_out)
-            im.save(f"video_frames/frame{i}.jpg")
+            im.save(f"video_frames/video{video_num}_frame{i}.jpg")
                         
 
 

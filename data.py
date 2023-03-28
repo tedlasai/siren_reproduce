@@ -76,6 +76,8 @@ class Poisson(Dataset):
         self.image = (self.image - 0.5)*2
 
         self.image *= imageMult
+
+        self.original_shape = self.image.shape #just keep this for later reconstruction
         
         coords_dim0 = torch.linspace(-1, 1, self.image.shape[0])
         coords_dim1 = torch.linspace(-1, 1, self.image.shape[1])

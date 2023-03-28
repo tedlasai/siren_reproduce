@@ -42,7 +42,7 @@ def train(video_num, lr, device, chkpointperiod):
                     os.mkdir(dir_checkpoint)
                     logging.info('Created checkpoint directory')
 
-                torch.save(model.state_dict(), dir_checkpoint + f'epoch{epoch + 1}.pth')
+                torch.save(model.state_dict(), dir_checkpoint + f'video_{video_num}_epoch{epoch + 1}.pth')
                 logging.info(f'Checkpoint {epoch + 1} saved!')
 
                 with torch.no_grad():

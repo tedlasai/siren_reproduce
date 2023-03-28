@@ -43,6 +43,7 @@ def train(lr, device, chkpointperiod):
         
 
             loss_im = mse(model_out, gt_ims)
+            print("ENCODER OOUT SHAPPE", encoder_out.shape)
             loss_latent = torch.mean(torch.norm(encoder_out, dim=1))*0.1
             loss_weights = weights_total*100
             loss = loss_im + loss_latent + loss_weights

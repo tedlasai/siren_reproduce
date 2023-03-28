@@ -31,25 +31,17 @@ class BatchLinear(nn.Linear, MetaModule):
         output = input.matmul(weight.permute(*[i for i in range(len(weight.shape) - 2)], -1, -2))
         output += bias.unsqueeze(-2)
         return output
-
-class Sine(nn.Module):
-    def __init(self):
-        super().__init__()
-
-    def forward(self, input):
-        # See paper sec. 3.2, final paragraph, and supplement Sec. 1.5 for discussion of factor 30
-        return torch.sin(30 * input)
     
 #my own stuff
 class MetaSirenLayer(MetaModule):
 
     def __init__(self, in_size, out_size, first_layer=False, final_layer=False, bias=True):
         super(MetaSirenLayer, self).__init__()
-        self.linear_layer = MetaSequential(BatchLinear(in_size, out_size, bias), Sine())
-        self.w_0 = 30
+        self.linear_layer = MetaSequential(BatchLinear(in_size, out_size, bias))
 
         #self.linear_layer.weight.data = weights
         self.final_layer = final_layer
+        self.w_0 = 30
     
     def forward(self, input, params):
         linear_out = self.linear_layer(input, get_subdict(params, 'linear_layer'))

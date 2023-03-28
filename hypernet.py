@@ -55,10 +55,11 @@ class myHypernet(nn.Module):
             subnet = self.subnets[i]
             weights = subnet(input)
             weights_total += torch.sum(weights**2)
-            weights_count = 1
-            for dim in weights.shape:
-                weights_count *= dim
+            
+            #https://discuss.pytorch.org/t/how-do-i-check-the-number-of-parameters-of-a-model/4325/25?page=2
+            weights_count =  sum(p.numel() for p in subnet.parameters())
+
             num_weights += weights_count
             updated_params[self.keys[i]] = weights
-        return updated_params, weights_total/num_weights
+        return updated_params, weights_total/(num_weights)
         

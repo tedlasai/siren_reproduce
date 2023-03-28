@@ -34,7 +34,7 @@ def train(lr, device, chkpointperiod):
             dir_checkpoint = f'./checkpoints_reconstruction/'
             coord_values, sparse_ims, gt_ims = coord_values.to(device), sparse_ims.to(device), gt_ims.to(device)
             encoder_out = encoder(sparse_ims)
-            siren_params = hypernet(encoder_out)
+            siren_params, weights_total = hypernet(encoder_out)
             model_out = model(coord_values, siren_params)
             model_out = torch.moveaxis(model_out, (1), (2))
             model_out = model_out.reshape((model_out.shape[0], model_out.shape[1],32,32))
@@ -43,16 +43,17 @@ def train(lr, device, chkpointperiod):
         
 
             loss_im = mse(model_out, gt_ims)
-            loss_latent = torch.mean(torch.norm(encoder_out, dim=1))
-            loss = loss_im + loss_latent*0.1
-            print("LOSS LATENT", torch.norm(encoder_out, dim=1).shape)
+            loss_latent = torch.mean(torch.norm(encoder_out, dim=1))*0.1
+            loss_weights = weights_total*100
+            loss = loss_im + loss_latent + loss_weights
+
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
             print(f"Loss:{loss} ")
 
-            psnr = 10*torch.log10(4/loss)
-            wandb.log({"Mse": loss, "PSNR_batch": psnr},) #psnr for small batch
+            psnr = 10*torch.log10(4/loss_im)
+            wandb.log({"Loss_im": loss_im, "Loss_latent": loss_latent, "loss_weights": loss_weights, "Loss_total": loss, "PSNR": psnr, "Epoch": epoch},) #psnr for small batch
 
 
             if (epoch + 1) % chkpointperiod == 0 or epoch==(epochs-1):#for last epoch output tthe full psnr

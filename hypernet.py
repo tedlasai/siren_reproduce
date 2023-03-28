@@ -48,12 +48,17 @@ class myHypernet(nn.Module):
         
     
     def forward(self, input):
-
-        
         updated_params = OrderedDict()
-        print("HELLO")
+        weights_total = 0
+        num_weights = 0
         for i, subnet in enumerate(self.subnets):
             subnet = self.subnets[i]
-            updated_params[self.keys[i]] = subnet(input)
-        return updated_params
+            weights = subnet(input)
+            weights_total += torch.sum(weights**2)
+            weights_count = 1
+            for dim in weights.shape:
+                weights_count *= dim
+            num_weights += weights_count
+            updated_params[self.keys[i]] = weights
+        return updated_params, weights_total/num_weights
         

@@ -13,9 +13,9 @@ from encoder import myEncoder
 from hypernet import myHypernet
 
 def train(lr, device, chkpointperiod):
-    epochs=100000 #number used in paper for video training
+    epochs=175 #number used in paper for video training
 
-    model = myMetaSiren(in_size=3, out_size=3, hidden_layers=0, hidden_size=1024)
+    model = myMetaSiren(in_size=2, out_size=3, hidden_layers=3, hidden_size=256)
     encoder = myEncoder()
     hypernet = myHypernet(model.meta_named_parameters())
     model.to(device=device)
@@ -24,8 +24,9 @@ def train(lr, device, chkpointperiod):
     print(model)
 
     celeba_dataset = CelebA(split='train')
-    optimizer = optim.Adam(model.parameters(), lr=lr)
-    dataloader = DataLoader(celeba_dataset, batch_size=10, pin_memory=True, num_workers=0)
+    all_params = list(encoder.parameters()) + list(hypernet.parameters())
+    optimizer = optim.Adam(all_params, lr=lr)
+    dataloader = DataLoader(celeba_dataset, batch_size=200, pin_memory=True, num_workers=0)
 
 
     for epoch in range(epochs):
@@ -35,9 +36,16 @@ def train(lr, device, chkpointperiod):
             encoder_out = encoder(sparse_ims)
             siren_params = hypernet(encoder_out)
             model_out = model(coord_values, siren_params)
+            model_out = torch.moveaxis(model_out, (1), (2))
+            model_out = model_out.reshape((model_out.shape[0], model_out.shape[1],32,32))
             mse = nn.MSELoss()
 
-            loss = mse(model_out, gt_ims)
+        
+
+            loss_im = mse(model_out, gt_ims)
+            loss_latent = torch.mean(torch.norm(encoder_out, dim=1))
+            loss = loss_im + loss_latent*0.1
+            print("LOSS LATENT", torch.norm(encoder_out, dim=1).shape)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -77,9 +85,9 @@ def train(lr, device, chkpointperiod):
 
 def get_args():
     parser = argparse.ArgumentParser(description='Train video network')
-    parser.add_argument('-lr', '--learning-rate', metavar='LR', type=float, nargs='?', default=0.0001,
+    parser.add_argument('-lr', '--learning-rate', metavar='LR', type=float, nargs='?', default=0.00005,
                         help='Learning rate', dest='lr')
-    parser.add_argument('-c', '--checkpoint-period', dest='chkpointperiod', type=int, default=5,
+    parser.add_argument('-c', '--checkpoint-period', dest='chkpointperiod', type=int, default=5000,
                     help='Number of epochs to save a checkpoint')
     return parser.parse_args()
 

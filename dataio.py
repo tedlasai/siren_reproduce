@@ -48,20 +48,19 @@ class CelebA(Dataset):
             bottom = (height + s) / 2
             img = img.crop((left, top, right, bottom))
             img = img.resize((32, 32))
+        
 
-        spatial_img = torch.tensor(np.array(img).astype(np.single))
+
+        spatial_img = torch.tensor(np.array(img).astype(np.single))/255.0
+        spatial_img = (spatial_img-0.5)*2
         spatial_img = torch.moveaxis(spatial_img, (0, 1, 2), (1,2,0))
         
         #coordinates for each diemension
-        coords_dim0 = torch.linspace(-1, 1, spatial_img.shape[0])
-        coords_dim1 = torch.linspace(-1, 1, spatial_img.shape[1])
+        coords_dim0 = torch.linspace(-1, 1, spatial_img.shape[1])
+        coords_dim1 = torch.linspace(-1, 1, spatial_img.shape[2])
 
         coords = torch.stack(torch.meshgrid((coords_dim0, coords_dim1)), axis=-1)
-
-
-
-        
-       
+        self.coords = coords.view(-1,2)
 
         if self.test_sparsity == 'full':
                 img_sparse = spatial_img
@@ -76,9 +75,12 @@ class CelebA(Dataset):
                     torch.empty(1).uniform_(self.train_sparsity_range[0], self.train_sparsity_range[1]).item())
             mask = spatial_img.new_empty(
                 1, spatial_img.size(1), spatial_img.size(2)).bernoulli_(p=num_context / np.prod(self.sidelength))
+            #print("USING MASKED IMAGEs")
             img_sparse = mask * spatial_img
+        
+        #print('img_sparse')
 
-        return coords, img_sparse, spatial_img
+        return self.coords, img_sparse, spatial_img
 
         
         

@@ -27,12 +27,7 @@ class BatchLinear(nn.Linear, MetaModule):
         bias = params.get('bias', None)
         weight = params['weight']
 
-        print("BIAS SHAPE", bias.shape)
-        print("WEIGHT SHAPE", weight.shape)
-        print("INPUT SHAPE", input.shape)
-
         weight_heere = weight.permute(*[i for i in range(len(weight.shape) - 2)], -1, -2)
-        print("WTF", weight_heere.shape)
         output = input.matmul(weight.permute(*[i for i in range(len(weight.shape) - 2)], -1, -2))
         output += bias.unsqueeze(-2)
         return output
@@ -50,23 +45,19 @@ class MetaSirenLayer(MetaModule):
 
     def __init__(self, in_size, out_size, first_layer=False, final_layer=False, bias=True):
         super(MetaSirenLayer, self).__init__()
-        rand_weights = (torch.rand(out_size, in_size)-0.5)*2 #get random numbers between -1 and 1 (uniform distribution)
         self.linear_layer = MetaSequential(BatchLinear(in_size, out_size, bias), Sine())
         self.w_0 = 30
-        if first_layer:
-            weights = rand_weights * (1/in_size)
-        else:
-            weights = rand_weights * ((6/in_size)**0.5) * (1/self.w_0)
+
         #self.linear_layer.weight.data = weights
         self.final_layer = final_layer
     
     def forward(self, input, params):
         linear_out = self.linear_layer(input, get_subdict(params, 'linear_layer'))
-        return linear_out
-        #if self.final_layer:
-        #    return linear_out
-        #else:
-            #return torch.sin(self.w_0*linear_out)
+
+        if self.final_layer:
+           return linear_out
+        else:
+            return torch.sin(self.w_0*linear_out)
     
 class myMetaSiren(MetaModule):
     def __init__(self, in_size=2, out_size=3, hidden_layers=3, hidden_size=256): #these are the valus they used in the paper for most experiments

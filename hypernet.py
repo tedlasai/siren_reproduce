@@ -15,16 +15,35 @@ class myHypernet(nn.Module):
         self.keys = []
         self.params_shapes = []
         for key, params in self.params_gen:
-            
-            layers=[]
-            layers.append(nn.Linear(2700, 256)) #first layer
-            last_layer_size = 1
-            for dim in params.shape:
-                last_layer_size *= dim
-            layers.append(nn.Linear(256, last_layer_size))
-            layers.append(nn.Unflatten(-1, params.shape))
-            self.subnets.append(nn.Sequential(*layers))
-            self.keys.append(key)
+            print(type(key), key, "model.4" in key)
+            #lastlayer=
+            if "model.4" in key:
+                print("OVER HERE")
+                layers=[]
+                l = nn.Linear(256, 256)
+                l.weight.data = l.weight.data * 0.01
+                l.bias.data = (torch.rand(l.bias.shape)-0.5) * 2 * 1/256
+                layers.append(l) #first layer
+                last_layer_size = 1
+                for dim in params.shape:
+                    last_layer_size *= dim
+                l = nn.Linear(256, last_layer_size)
+                l.weight.data = l.weight.data * 0.01
+                l.bias.data = (torch.rand(l.bias.shape)-0.5) * 2 * 1/256
+                layers.append(l)
+                layers.append(nn.Unflatten(-1, params.shape))
+                self.subnets.append(nn.Sequential(*layers))
+                self.keys.append(key)
+            else:
+                layers=[]
+                layers.append(nn.Linear(256, 256)) #first layer
+                last_layer_size = 1
+                for dim in params.shape:
+                    last_layer_size *= dim
+                layers.append(nn.Linear(256, last_layer_size))
+                layers.append(nn.Unflatten(-1, params.shape))
+                self.subnets.append(nn.Sequential(*layers))
+                self.keys.append(key)
 
         
     

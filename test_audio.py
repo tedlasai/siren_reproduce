@@ -26,7 +26,9 @@ def test(audio_num, device, chkpoint):
         model_out = model(coord_values)
         model_out = model_out
         plt.xticks([])
+        plt.ylim(-1,1)
         plt.yticks(np.arange(-1, 2, step=1))
+
         plt.plot(coord_values.squeeze().cpu().detach().numpy(), model_out.squeeze().cpu().detach().numpy())
         plt.savefig(f"audio_vis/outplot_{audio_num}.jpg")
 

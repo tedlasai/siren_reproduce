@@ -27,6 +27,9 @@ def train(lr, device, chkpointperiod, gradientlaplace):
     poisson = Poisson(imageMult, num_items=num_items)
     optimizer = optim.Adam(model.parameters(), lr=lr)
     dataloader = DataLoader(poisson, batch_size=1, pin_memory=True, num_workers=0)
+
+    supervised_by =["gradient", "laplace"]
+
     for epoch in range(epochs):
         for coord_values, image_gt, gradient_gt, laplace_gt in dataloader:
             dir_checkpoint = f'./checkpoints_poisson/'
@@ -90,7 +93,7 @@ def train(lr, device, chkpointperiod, gradientlaplace):
                     os.mkdir(dir_checkpoint)
                     logging.info('Created checkpoint directory')
 
-                torch.save(model.state_dict(), dir_checkpoint + f'epoch{epoch + 1}.pth')
+                torch.save(model.state_dict(), dir_checkpoint + f'{supervised_by[gradientlaplace]}_epoch{epoch + 1}.pth')
                 logging.info(f'Checkpoint {epoch + 1} saved!')
 
 

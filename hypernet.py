@@ -16,14 +16,14 @@ class myHypernet(nn.Module):
         self.params_shapes = []
         for key, params in self.params_gen:
             print(type(key), key, "model.4" in key)
-            #lastlayer=
-            if "model.4" in key:
+            if "model.4" in key: #if last layer do it a little idfferent
                 print("OVER HERE")
                 layers=[]
                 l = nn.Linear(256, 256)
                 l.weight.data = l.weight.data * 0.01
                 l.bias.data = (torch.rand(l.bias.shape)-0.5) * 2 * 1/256
                 layers.append(l) #first layer
+                layers.append(nn.ReLU())
                 last_layer_size = 1
                 for dim in params.shape:
                     last_layer_size *= dim
@@ -37,6 +37,7 @@ class myHypernet(nn.Module):
             else:
                 layers=[]
                 layers.append(nn.Linear(256, 256)) #first layer
+                layers.append(nn.ReLU())
                 last_layer_size = 1
                 for dim in params.shape:
                     last_layer_size *= dim
@@ -56,8 +57,9 @@ class myHypernet(nn.Module):
             weights = subnet(input)
             weights_total += torch.sum(weights**2)
             
-            #https://discuss.pytorch.org/t/how-do-i-check-the-number-of-parameters-of-a-model/4325/25?page=2
-            weights_count =  sum(p.numel() for p in subnet.parameters())
+            weights_count =  1
+            for dim in weights.shape:
+                weights_count *= dim
 
             num_weights += weights_count
             updated_params[self.keys[i]] = weights

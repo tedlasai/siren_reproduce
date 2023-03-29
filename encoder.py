@@ -3,7 +3,7 @@ import torch
 
 class ResBlock(nn.Module):
     def __init__(self, channels_in, channels_out=256):
-        super(ResBlock).__init__()
+        super(ResBlock, self).__init__()
 
         self.conv = nn.Sequential(
             nn.Conv2d(channels_in, channels_out, 5, 1, 2),
@@ -20,7 +20,7 @@ class ResBlock(nn.Module):
 class myEncoder(nn.Module):
 
     def __init__(self):
-        super(myEncoder).__init__()
+        super(myEncoder, self).__init__()
 
         self.conv_first = nn.Conv2d(3, 128, 3, 1, 1)
         self.relu = nn.ReLU()
@@ -32,7 +32,7 @@ class myEncoder(nn.Module):
             ResBlock(256, 256),
             ResBlock(256, 256),
             ResBlock(256, 256),
-            nn.Conv2d(256, 256, 1, 1, 0)
+            nn.Conv2d(256, 256, 1) 
         )
 
         self.relu_2 = nn.ReLU()

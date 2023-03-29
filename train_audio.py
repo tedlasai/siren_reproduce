@@ -40,7 +40,7 @@ def train(audio_num, lr, device, chkpointperiod):
                     os.mkdir(dir_checkpoint)
                     logging.info('Created checkpoint directory')
 
-                torch.save(model.state_dict(), dir_checkpoint + f'epoch{epoch + 1}.pth')
+                torch.save(model.state_dict(), dir_checkpoint + f'audio_{audio_num}_epoch{epoch + 1}.pth')
                 logging.info(f'Checkpoint {epoch + 1} saved!')
 
                 #no need to redo computation of model out because it is alreayd over the whole batch

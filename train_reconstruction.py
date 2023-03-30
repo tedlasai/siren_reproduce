@@ -26,7 +26,7 @@ def train(lr, device, chkpointperiod):
     celeba_dataset = CelebA(split='train')
     all_params = list(encoder.parameters()) + list(hypernet.parameters())
     optimizer = optim.Adam(all_params, lr=lr)
-    dataloader = DataLoader(celeba_dataset, batch_size=200, pin_memory=True, num_workers=0)
+    dataloader = DataLoader(celeba_dataset, batch_size=200, pin_memory=True, num_workers=0, shuffle=True)
 
 
     for epoch in range(epochs):
@@ -42,9 +42,9 @@ def train(lr, device, chkpointperiod):
 
         
 
-            loss_im = mse(model_out, gt_ims)
+            loss_im = mse(model_out, gt_ims)*3 #loss_im is only divided by h*w not H*w*c #thus I multiply the three back in
             print("ENCODER OOUT SHAPPE", encoder_out.shape)
-            loss_latent = torch.mean(torch.norm(encoder_out, dim=1))*0.1
+            loss_latent = torch.mean(encoder_out**2)*0.1
             loss_weights = weights_total*100
             loss = loss_im + loss_latent + loss_weights
 
@@ -53,35 +53,36 @@ def train(lr, device, chkpointperiod):
             optimizer.step()
             print(f"Loss:{loss} ")
 
-            psnr = 10*torch.log10(4/loss_im)
-            wandb.log({"Loss_im": loss_im, "Loss_latent": loss_latent, "loss_weights": loss_weights, "Loss_total": loss, "PSNR": psnr, "Epoch": epoch},) #psnr for small batch
+            psnr = 10*torch.log10(4/(loss_im/3))
+            wandb.log({"Loss_im": loss_im/3, "Loss_latent": loss_latent, "loss_weights": loss_weights, "Loss_total": loss, "PSNR": psnr, "Epoch": epoch},) #psnr for small batch
 
 
-            if (epoch + 1) % chkpointperiod == 0 or epoch==(epochs-1):#for last epoch output tthe full psnr
-                if not os.path.exists(dir_checkpoint):
-                    os.mkdir(dir_checkpoint)
-                    logging.info('Created checkpoint directory')
+        if (epoch + 1) % chkpointperiod == 0 or epoch==(epochs-1):#for last epoch output tthe full psnr
+            if not os.path.exists(dir_checkpoint):
+                os.mkdir(dir_checkpoint)
+                logging.info('Created checkpoint directory')
 
-                torch.save(encoder.state_dict(), dir_checkpoint + f'encoder_epoch{epoch + 1}.pth')
-                torch.save(encoder.state_dict(), dir_checkpoint + f'hypernet_epoch{epoch + 1}.pth')
-                logging.info(f'Checkpoint {epoch + 1} saved!')
+            states = {"encoder": encoder.state_dict(), "hypernet":hypernet.state_dict()}
 
-                with torch.no_grad():
-                    pass
+            torch.save(states, dir_checkpoint + f'epoch{epoch + 1}.pth')
+            logging.info(f'Checkpoint {epoch + 1} saved!')
 
-                    # expectation_psnr = torch.mean(psnr_values)
-                    # psnr_variance = torch.var(psnr_values)
-                   
-                    # #expectation_psnr = 10*torch.log10(2/expectation_mse)
+            with torch.no_grad():
+                pass
 
-                    # #psnr_variance = 10*torch.log10(2/mse_variance)
-
-
-
+                # expectation_psnr = torch.mean(psnr_values)
+                # psnr_variance = torch.var(psnr_values)
                 
-                    # wandb.log({"PSNR_mean": expectation_psnr, "PSNR_variance": psnr_variance},) #for sirens this PS
-                    # print("PSNR MEAN: ", expectation_psnr)
-                    # print("PSNR VAR: ", psnr_variance)
+                # #expectation_psnr = 10*torch.log10(2/expectation_mse)
+
+                # #psnr_variance = 10*torch.log10(2/mse_variance)
+
+
+
+            
+                # wandb.log({"PSNR_mean": expectation_psnr, "PSNR_variance": psnr_variance},) #for sirens this PS
+                # print("PSNR MEAN: ", expectation_psnr)
+                # print("PSNR VAR: ", psnr_variance)
 
 
 
@@ -90,7 +91,7 @@ def get_args():
     parser = argparse.ArgumentParser(description='Train reconstruction network')
     parser.add_argument('-lr', '--learning-rate', metavar='LR', type=float, nargs='?', default=0.00005,
                         help='Learning rate', dest='lr')
-    parser.add_argument('-c', '--checkpoint-period', dest='chkpointperiod', type=int, default=5000,
+    parser.add_argument('-c', '--checkpoint-period', dest='chkpointperiod', type=int, default=5,
                     help='Number of epochs to save a checkpoint')
     return parser.parse_args()
 

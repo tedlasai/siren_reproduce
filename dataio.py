@@ -6,7 +6,7 @@ import os
 import torch
 
 class CelebA(Dataset):
-    def __init__(self, split, downsampled=True):
+    def __init__(self, split, test_sparsity="random", train_sparsity_range=(10,1000), downsampled=True):
         # SIZE (178 x 218)
         super().__init__()
         assert split in ['train', 'test', 'val'], "Unknown split"
@@ -26,9 +26,9 @@ class CelebA(Dataset):
                     self.fnames.append(row[0])
 
         self.downsampled = downsampled
-        self.test_sparsity = "random"
+        self.test_sparsity = test_sparsity
         self.generalization_mode = "train"
-        self.train_sparsity_range = (10,200)
+        self.train_sparsity_range = train_sparsity_range
         self.sidelength = (32, 32)
 
     def __len__(self):
@@ -67,18 +67,18 @@ class CelebA(Dataset):
         elif self.test_sparsity == 'half':
             img_sparse = spatial_img
             img_sparse[:, 16:, :] = 0.
-        else:
-            if self.generalization_mode == 'conv_cnp_test':
-                num_context = int(self.test_sparsity)
-            else:
-                num_context = int(
-                    torch.empty(1).uniform_(self.train_sparsity_range[0], self.train_sparsity_range[1]).item())
+        elif self.test_sparsity == 'random_test':
+            num_context = self.train_sparsity_range
             mask = spatial_img.new_empty(
                 1, spatial_img.size(1), spatial_img.size(2)).bernoulli_(p=num_context / np.prod(self.sidelength))
-            #print("USING MASKED IMAGEs")
             img_sparse = mask * spatial_img
-        
-        #print('img_sparse')
+        else:
+            num_context = int(
+                torch.empty(1).uniform_(self.train_sparsity_range[0], self.train_sparsity_range[1]).item())
+            mask = spatial_img.new_empty(
+                1, spatial_img.size(1), spatial_img.size(2)).bernoulli_(p=num_context / np.prod(self.sidelength))
+            img_sparse = mask * spatial_img
+           
 
         return self.coords, img_sparse, spatial_img
 

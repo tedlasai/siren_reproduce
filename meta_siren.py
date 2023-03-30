@@ -16,9 +16,6 @@ def get_subdict(dictionary, key=None):
 
 #this class is taken from the repo
 class BatchLinear(nn.Linear, MetaModule):
-    '''A linear meta-layer that can deal with batched weight matrices and biases, as for instance output by a
-    hypernetwork.'''
-    __doc__ = nn.Linear.__doc__
 
     def forward(self, input, params=None):
         if params is None:
@@ -26,9 +23,11 @@ class BatchLinear(nn.Linear, MetaModule):
 
         bias = params.get('bias', None)
         weight = params['weight']
-
+        print("WEIGHT.shape", weight.shape)
         weight_heere = weight.permute(*[i for i in range(len(weight.shape) - 2)], -1, -2)
-        output = input.matmul(weight.permute(*[i for i in range(len(weight.shape) - 2)], -1, -2))
+        print("WEIGHT_HERE.shape", weight_heere.shape)
+        weight = torch.moveaxis(weight, (0,1,2), (0,2,1))#weight.permute(*[i for i in range(len(weight.shape) - 2)], -1, -2)
+        output = torch.matmul(input,weight)
         output += bias.unsqueeze(-2)
         return output
     

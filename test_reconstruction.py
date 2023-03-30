@@ -11,7 +11,7 @@ import wandb
 from meta_siren import myMetaSiren
 from encoder import myEncoder
 from hypernet import myHypernet
-
+from PIL import Image
 def test(device, chkpoint):
 
     model = myMetaSiren(in_size=2, out_size=3, hidden_layers=3, hidden_size=256)
@@ -20,19 +20,66 @@ def test(device, chkpoint):
     model.to(device=device)
     encoder.to(device=device)
     hypernet.to(device=device)
-    celeba_dataset = CelebA(split='test')
-    dataloader = DataLoader(celeba_dataset, batch_size=1, pin_memory=True, num_workers=0)
 
-
-    for coord_values, sparse_ims, gt_ims in dataloader:
-        dir_checkpoint = f'./checkpoints_reconstruction/'
-        coord_values, sparse_ims, gt_ims = coord_values.to(device), sparse_ims.to(device), gt_ims.to(device)
-        encoder_out = encoder(sparse_ims)
-        siren_params, weights_total = hypernet(encoder_out)
-        model_out = model(coord_values, siren_params)
-        model_out = torch.moveaxis(model_out, (1), (2))
-        model_out = model_out.reshape((model_out.shape[0], model_out.shape[1],32,32))
+    checkpoint = torch.load(chkpoint, map_location=device)
+    encoder.load_state_dict(checkpoint["encoder"])
+    hypernet.load_state_dict(checkpoint["hypernet"])
+    del checkpoint
     
+
+    scenarios = ["random_test", "random_test", "random_test", "half", "full"]
+    ranges = [10, 100, 1000, -1, -1] # last two don't use rnage parameter anyways
+
+    for i in range(5):
+        celeba_dataset = CelebA(split='test', test_sparsity=scenarios[i], train_sparsity_range=ranges[i])
+        dataloader = DataLoader(celeba_dataset, batch_size=1, pin_memory=True, num_workers=0, shuffle=False)
+        count = 0
+        loss = 0
+        for coord_values, sparse_ims, gt_ims in dataloader:
+            coord_values, sparse_ims, gt_ims = coord_values.to(device), sparse_ims.to(device), gt_ims.to(device)
+            encoder_out = encoder(sparse_ims)
+            siren_params, weights_total = hypernet(encoder_out)
+            model_out = model(coord_values, siren_params)
+            model_out = torch.moveaxis(model_out, (1), (2))
+            model_out = model_out.reshape((model_out.shape[0], model_out.shape[1],32,32))
+
+            mse = nn.MSELoss()
+            loss_im = mse(model_out, gt_ims)
+            with torch.no_grad():
+                loss += loss_im
+
+                model_out = (model_out+1)*0.5*255
+                model_out = torch.moveaxis(model_out.squeeze(), (0,1,2), (2,0,1))
+                model_out = model_out.detach().cpu().numpy()
+                model_out = np.clip(model_out, 0, 255)
+                model_out = model_out.astype(np.uint8)
+                model_out = model_out.reshape(32, 32, 3)
+                im = Image.fromarray(model_out)
+                im.save(f"reconstruction_frames/scenario_{i}/frame{count}_reconstruction.png")
+
+                gt_ims = (gt_ims+1)*0.5*255
+                gt_ims = torch.moveaxis(gt_ims.squeeze(), (0,1,2), (2,0,1))
+                gt_ims = gt_ims.detach().cpu().numpy()
+                gt_ims = np.clip(gt_ims, 0, 255)
+                gt_ims = gt_ims.astype(np.uint8)
+                gt_ims = gt_ims.reshape(32, 32, 3)
+                im = Image.fromarray(gt_ims)
+                im.save(f"reconstruction_frames/scenario_{i}/frame{count}_gt.png")
+
+                
+                sparse_ims = torch.moveaxis(sparse_ims.squeeze(), (0,1,2), (2,0,1))
+                mask = torch.sum(sparse_ims, axis=2) ==0
+                sparse_ims[mask, :] = 1
+                sparse_ims = (sparse_ims+1)*0.5*255
+                sparse_ims = sparse_ims.detach().cpu().numpy()
+                sparse_ims = np.clip(sparse_ims, 0, 255)
+                sparse_ims = sparse_ims.astype(np.uint8)
+                sparse_ims = sparse_ims.reshape(32, 32, 3)
+                
+                im = Image.fromarray(sparse_ims)
+                im.save(f"reconstruction_frames/scenario_{i}/frame{count}_sparse_initial.png")
+                count+=1
+        print(f"Scenario: {i} Loss: {loss/count}")
 
 
 
@@ -40,7 +87,7 @@ def get_args():
     parser = argparse.ArgumentParser(description='Train reconstruction network')
     parser.add_argument('-lr', '--learning-rate', metavar='LR', type=float, nargs='?', default=0.00005,
                         help='Learning rate', dest='lr')
-    parser.add_argument('-c', '--checkpoint', dest='chpoint', type=str, default="checkpoints_reconstruction/epoch35.pth",
+    parser.add_argument('-c', '--checkpoint', dest='chkpoint', type=str, default="checkpoints_reconstruction/epoch35.pth",
                     help='Number of epochs to save a checkpoint')
     return parser.parse_args()
 
@@ -71,4 +118,4 @@ if __name__ == '__main__':
     notes="",
     tags=["baseline"])
 
-    test(device=device, chkpointperiod=args.chkpointperiod)
+    test(device=device, chkpoint=args.chkpoint)

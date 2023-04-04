@@ -12,7 +12,7 @@ class Video(Dataset):
     def __init__(self, video_num, num_items = 160000):
         self.num_items = num_items #num_items iis 160000 as specified in paper
         if video_num == 1:
-            self.vid = torch.tensor(skvideo.io.vread("cat_video.mp4").astype(np.single) / 255.0)
+            self.vid = torch.tensor(skvideo.io.vread("./data/cat_video.mp4").astype(np.single) / 255.0)
         else:
             self.vid = torch.tensor(skvideo.io.vread(datasets.bikes()).astype(np.single) / 255.0)
 
@@ -50,10 +50,10 @@ class Audio(Dataset):
     def __init__(self, audio_num):
         if audio_num == 1:
 
-            samplerate, self.audio = wavfile.read('./gt_bach.wav')
+            samplerate, self.audio = wavfile.read('./data/gt_bach.wav')
             self.audio = torch.unsqueeze(torch.tensor(self.audio), dim=1)
         else:
-            samplerate, self.audio = wavfile.read('./gt_counting.wav')
+            samplerate, self.audio = wavfile.read('./data/gt_counting.wav')
             self.audio = torch.unsqueeze(torch.tensor(self.audio), dim=1)
 
         self.coords = torch.linspace(-1, 1, self.audio.shape[0]).unsqueeze(dim=1)*100 # the paper did this mulitiplication by 100
@@ -70,7 +70,7 @@ class Audio(Dataset):
 class Poisson(Dataset):
     def __init__(self, imageMult, num_items = None):
         self.num_items = num_items
-        img = Image.open('starfish.jpg').convert("L") #grayscale
+        img = Image.open('./data/starfish.jpg').convert("L") #grayscale
         self.image = torch.tensor(np.array(img).astype(np.single))/255.0
        
         self.image = (self.image - 0.5)*2

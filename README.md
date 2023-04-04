@@ -1,3 +1,6 @@
+# Reimplementation of SIREN
+
+## Overview
 1. Model is provided in the siren.py and meta_siren.py(used for reconstruction experiment) file
 2. Train/test scripts for each of the 4 experiments are provided.
 3. Additionally there are some dataloader files and utilities files.
@@ -9,10 +12,6 @@ As mentioned in the write up this git repo targets 4 tasks. We provide train/tes
 2. Video representation
 3. Poisson reconstruction
 4. Learning an implicit space(reconstruction/impainting)
-
->📋  Code accompanying my reconstruction of SIREN.
-
-# Reimplementation of SIREN
 
 ## Requirements
 

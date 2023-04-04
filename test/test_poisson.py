@@ -1,5 +1,5 @@
-from siren import mySiren
-from data import Poisson
+from models.siren import mySiren
+from dataloaders.data import Poisson
 from torch.utils.data import DataLoader
 import logging
 import argparse

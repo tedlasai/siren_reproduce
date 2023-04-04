@@ -9,3 +9,41 @@ As mentioned in the write up this git repo targets 4 tasks. We provide train/tes
 2. Video representation
 3. Poisson reconstruction
 4. Learning an implicit space(reconstruction/impainting)
+
+>📋  Code accompanying my reconstruction of SIREN.
+
+# Reimplementation of SIREN
+
+## Requirements
+
+To build environemnt:
+
+```setup
+conda env create -f env.yml
+```
+
+
+## Training
+
+To train the model(s) in the paper, run command such as:
+
+```train
+python train/train_audio.py
+python train/train_video.py
+```
+
+>There are 4 different training scripts. One trianing script for each experiment. 
+
+## Evaluation
+
+To evaluate my model on a sample task such as audio:
+
+```eval
+python test/test_audio.py -c checkpoint_path.pth
+```
+
+> There are 4 test scripts. One for each experiment.
+
+
+
+

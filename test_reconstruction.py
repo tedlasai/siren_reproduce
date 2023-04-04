@@ -44,11 +44,13 @@ def test(device, chkpoint):
             model_out = model_out.reshape((model_out.shape[0], model_out.shape[1],32,32))
 
             mse = nn.MSELoss()
+            model_out = torch.clip((model_out+1)*0.5, 0, 1)
+            gt_ims = torch.clip((gt_ims+1)*0.5, 0, 1)
             loss_im = mse(model_out, gt_ims)
             with torch.no_grad():
                 loss += loss_im
 
-                model_out = (model_out+1)*0.5*255
+                model_out = model_out*255
                 model_out = torch.moveaxis(model_out.squeeze(), (0,1,2), (2,0,1))
                 model_out = model_out.detach().cpu().numpy()
                 model_out = np.clip(model_out, 0, 255)
@@ -56,8 +58,8 @@ def test(device, chkpoint):
                 model_out = model_out.reshape(32, 32, 3)
                 im = Image.fromarray(model_out)
                 im.save(f"reconstruction_frames/scenario_{i}/frame{count}_reconstruction.png")
-
-                gt_ims = (gt_ims+1)*0.5*255
+        
+                gt_ims = gt_ims*255
                 gt_ims = torch.moveaxis(gt_ims.squeeze(), (0,1,2), (2,0,1))
                 gt_ims = gt_ims.detach().cpu().numpy()
                 gt_ims = np.clip(gt_ims, 0, 255)
@@ -87,7 +89,7 @@ def get_args():
     parser = argparse.ArgumentParser(description='Train reconstruction network')
     parser.add_argument('-lr', '--learning-rate', metavar='LR', type=float, nargs='?', default=0.00005,
                         help='Learning rate', dest='lr')
-    parser.add_argument('-c', '--checkpoint', dest='chkpoint', type=str, default="checkpoints_reconstruction/epoch35.pth",
+    parser.add_argument('-c', '--checkpoint', dest='chkpoint', type=str, default="checkpoints_reconstruction/epoch174.pth",
                     help='Number of epochs to save a checkpoint')
     return parser.parse_args()
 

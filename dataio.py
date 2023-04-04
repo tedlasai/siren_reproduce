@@ -6,7 +6,7 @@ import os
 import torch
 
 class CelebA(Dataset):
-    def __init__(self, split, test_sparsity="random", train_sparsity_range=(10,1000), downsampled=True):
+    def __init__(self, split, test_sparsity="random", train_sparsity_range=(10,200), downsampled=True):
         # SIZE (178 x 218)
         super().__init__()
         assert split in ['train', 'test', 'val'], "Unknown split"
@@ -63,10 +63,10 @@ class CelebA(Dataset):
         self.coords = coords.view(-1,2)
 
         if self.test_sparsity == 'full':
-                img_sparse = spatial_img
-        elif self.test_sparsity == 'half':
             img_sparse = spatial_img
-            img_sparse[:, 16:, :] = 0.
+        elif self.test_sparsity == 'half':
+            img_sparse = torch.clone(spatial_img)
+            img_sparse[:, 16:, :] = 0
         elif self.test_sparsity == 'random_test':
             num_context = self.train_sparsity_range
             mask = spatial_img.new_empty(

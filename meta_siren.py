@@ -5,6 +5,7 @@ from collections import OrderedDict
 
 import re
 
+#borrowed from torchmeta old repos
 def get_subdict(dictionary, key=None):
     if dictionary is None:
         return None
@@ -14,8 +15,7 @@ def get_subdict(dictionary, key=None):
     return OrderedDict((key_re.sub(r'\1', k), value) for (k, value)
         in dictionary.items() if key_re.match(k) is not None)
 
-#this class is taken from the repo
-class BatchLinear(nn.Linear, MetaModule):
+class MetaLinear(nn.Linear, MetaModule):
 
     def forward(self, input, params=None):
         if params is None:
@@ -23,10 +23,7 @@ class BatchLinear(nn.Linear, MetaModule):
 
         bias = params.get('bias', None)
         weight = params['weight']
-        print("WEIGHT.shape", weight.shape)
-        weight_heere = weight.permute(*[i for i in range(len(weight.shape) - 2)], -1, -2)
-        print("WEIGHT_HERE.shape", weight_heere.shape)
-        weight = torch.moveaxis(weight, (0,1,2), (0,2,1))#weight.permute(*[i for i in range(len(weight.shape) - 2)], -1, -2)
+        weight = torch.moveaxis(weight, (0,1,2), (0,2,1))
         output = torch.matmul(input,weight)
         output += bias.unsqueeze(-2)
         return output
@@ -36,7 +33,7 @@ class MetaSirenLayer(MetaModule):
 
     def __init__(self, in_size, out_size, first_layer=False, final_layer=False, bias=True):
         super(MetaSirenLayer, self).__init__()
-        self.linear_layer = MetaSequential(BatchLinear(in_size, out_size, bias))
+        self.linear_layer = MetaSequential(MetaLinear(in_size, out_size, bias))
 
         #self.linear_layer.weight.data = weights
         self.final_layer = final_layer
@@ -65,28 +62,6 @@ class myMetaSiren(MetaModule):
         subdict = get_subdict(params, 'model')
         #print("PARANMS", subdict)
         return self.model(input, params=subdict)
-
-
-
-# class hello(MetaModule):
-#     def __init__(self, in_size=2, out_size=3, hidden_layers=3, hidden_size=256): #these are the valus they used in the paper for most experiments
-
-#         self.model = myMetaSiren(in_size, out_size, hidden_layers, hidden_size)
-
-#     def forward(self, input, params=None):
-#         return model_output   
-
-#         print("HI")
-#         def get_subdict(dictionary, key=None):
-#             if dictionary is None:
-#                 return None
-#             if (key is None) or (key == ''):
-#                 return dictionary
-#             key_re = re.compile(r'^{0}\.(.+)'.format(re.escape(key)))
-#             return OrderedDict((key_re.sub(r'\1', k), value) for (k, value)
-#                 in dictionary.items() if key_re.match(k) is not None)
-
-#         model_output = self.model(input, params=get_subdict(params, 'net'))
 
 
         
